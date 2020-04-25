@@ -61,8 +61,10 @@ public abstract class BeanDefinitionReaderUtils {
 		bd.setParentName(parentName);
 		if (className != null) {
 			if (classLoader != null) {
+				//如果类加载器不为空，则使用类加载器实例化一个Class对象
 				bd.setBeanClass(ClassUtils.forName(className, classLoader));
 			}
+			//如果类加载器为空，则保存类名
 			else {
 				bd.setBeanClassName(className);
 			}
@@ -104,6 +106,10 @@ public abstract class BeanDefinitionReaderUtils {
 			BeanDefinition definition, BeanDefinitionRegistry registry, boolean isInnerBean)
 			throws BeanDefinitionStoreException {
 
+		//自动生成beanName的时候，先获取类名
+		//如果类名不存在，则获取父类名
+		//如果父类名也不存在，就获取工厂名
+		//都不存在，抛异常
 		String generatedBeanName = definition.getBeanClassName();
 		if (generatedBeanName == null) {
 			if (definition.getParentName() != null) {

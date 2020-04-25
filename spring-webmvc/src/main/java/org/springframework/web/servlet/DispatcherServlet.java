@@ -493,20 +493,29 @@ public class DispatcherServlet extends FrameworkServlet {
 	@Override
 	protected void onRefresh(ApplicationContext context) {
 		initStrategies(context);
+
 	}
 
 	/**
 	 * Initialize the strategy objects that this servlet uses.
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
+	 * 九大组件
 	 */
 	protected void initStrategies(ApplicationContext context) {
+		// 处理二进制文件的
 		initMultipartResolver(context);
+
 		initLocaleResolver(context);
 		initThemeResolver(context);
+
+		//初始化handlerMapping
 		initHandlerMappings(context);
+
+		//初始化 HandlerAdapters
 		initHandlerAdapters(context);
 		initHandlerExceptionResolvers(context);
 		initRequestToViewNameTranslator(context);
+
 		initViewResolvers(context);
 		initFlashMapManager(context);
 	}
@@ -595,6 +604,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		if (this.detectAllHandlerMappings) {
 			// Find all HandlerMappings in the ApplicationContext, including ancestor contexts.
+			//查找spring容器中的HandlerMapping
 			Map<String, HandlerMapping> matchingBeans =
 					BeanFactoryUtils.beansOfTypeIncludingAncestors(context, HandlerMapping.class, true, false);
 			if (!matchingBeans.isEmpty()) {
@@ -616,6 +626,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		// Ensure we have at least one HandlerMapping, by registering
 		// a default HandlerMapping if no other mappings are found.
 		if (this.handlerMappings == null) {
+			//获取默认的HandlerMapping
 			this.handlerMappings = getDefaultStrategies(context, HandlerMapping.class);
 			if (logger.isTraceEnabled()) {
 				logger.trace("No HandlerMappings declared for servlet '" + getServletName() +
@@ -912,6 +923,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		// Keep a snapshot of the request attributes in case of an include,
 		// to be able to restore the original attributes after the include.
+		//include请求的时候，把request属性做备份
 		Map<String, Object> attributesSnapshot = null;
 		if (WebUtils.isIncludeRequest(request)) {
 			attributesSnapshot = new HashMap<>();
@@ -1009,6 +1021,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			Exception dispatchException = null;
 
 			try {
+				//是否是二进制请求(即是否带有文件) 如果不是，直接返回，否者封装成对应的request
 				processedRequest = checkMultipart(request);
 				multipartRequestParsed = (processedRequest != request);
 
@@ -1032,6 +1045,8 @@ public class DispatcherServlet extends FrameworkServlet {
 					}
 				}
 
+				// 拦截器处理，责任链模式
+				// 如果返回false，则认为拦截失败
 				if (!mappedHandler.applyPreHandle(processedRequest, response)) {
 					return;
 				}
@@ -1044,6 +1059,7 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 
 				applyDefaultViewName(processedRequest, mv);
+				//拦截器处理
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			}
 			catch (Exception ex) {
@@ -1230,6 +1246,8 @@ public class DispatcherServlet extends FrameworkServlet {
 	@Nullable
 	protected HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
 		if (this.handlerMappings != null) {
+			//流程图中的，通过handlerMapper获取handler
+			//因为这个handler可能是在xml文件里配置的，也有可能是在代码里配置的
 			for (HandlerMapping mapping : this.handlerMappings) {
 				HandlerExecutionChain handler = mapping.getHandler(request);
 				if (handler != null) {
@@ -1470,5 +1488,4 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 		return uri;
 	}
-
 }

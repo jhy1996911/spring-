@@ -129,6 +129,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
 		if (this.delegate.isDefaultNamespace(root)) {
+			//处理profile
+			//profile 比如在xml中定义qa 线上等多套环境
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -145,8 +147,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 
+		//预处理，留给子类
 		preProcessXml(root);
 		parseBeanDefinitions(root, this.delegate);
+		//留给子类 模板模式，将定义提到父类
 		postProcessXml(root);
 
 		this.delegate = parent;
@@ -166,6 +170,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * @param root the DOM root element of the document
 	 */
 	protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
+		//根据命名空间来决定是默认的还是自定义的
 		if (delegate.isDefaultNamespace(root)) {
 			NodeList nl = root.getChildNodes();
 			for (int i = 0; i < nl.getLength(); i++) {
@@ -173,9 +178,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				if (node instanceof Element) {
 					Element ele = (Element) node;
 					if (delegate.isDefaultNamespace(ele)) {
+						//默认解析 这里是一个递归解析
 						parseDefaultElement(ele, delegate);
 					}
 					else {
+						//自定义解析
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -187,15 +194,19 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	}
 
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
+		//import元素解析
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
 			importBeanDefinitionResource(ele);
 		}
+		//别名解析
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
 			processAliasRegistration(ele);
 		}
+		//bean解析
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
 			processBeanDefinition(ele, delegate);
 		}
+		//beans标签解析
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
 			// recurse
 			doRegisterBeanDefinitions(ele);
@@ -214,6 +225,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 
 		// Resolve system properties: e.g. "${user.dir}"
+		//解析系统属性
 		location = getReaderContext().getEnvironment().resolveRequiredPlaceholders(location);
 
 		Set<Resource> actualResources = new LinkedHashSet<>(4);
@@ -221,6 +233,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// Discover whether the location is an absolute or relative URI
 		boolean absoluteLocation = false;
 		try {
+			//判断是否是绝对路径
 			absoluteLocation = ResourcePatternUtils.isUrl(location) || ResourceUtils.toURI(location).isAbsolute();
 		}
 		catch (URISyntaxException ex) {
@@ -230,6 +243,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 		// Absolute or relative?
 		if (absoluteLocation) {
+			//如果是绝对路径
 			try {
 				int importCount = getReaderContext().getReader().loadBeanDefinitions(location, actualResources);
 				if (logger.isTraceEnabled()) {
@@ -245,12 +259,14 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			// No URL -> considering resource location as relative to the current file.
 			try {
 				int importCount;
+				//在当前目录下查找
 				Resource relativeResource = getReaderContext().getResource().createRelative(location);
 				if (relativeResource.exists()) {
 					importCount = getReaderContext().getReader().loadBeanDefinitions(relativeResource);
 					actualResources.add(relativeResource);
 				}
 				else {
+					//到系统默认目录下查找 系统目录+文件目录
 					String baseLocation = getReaderContext().getResource().getURL().toString();
 					importCount = getReaderContext().getReader().loadBeanDefinitions(
 							StringUtils.applyRelativePath(baseLocation, location), actualResources);
@@ -268,6 +284,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 		Resource[] actResArray = actualResources.toArray(new Resource[0]);
+		//解析后发送消息
 		getReaderContext().fireImportProcessed(location, actResArray, extractSource(ele));
 	}
 
@@ -275,7 +292,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Process the given alias element, registering the alias with the registry.
 	 */
 	protected void processAliasRegistration(Element ele) {
+		//提取beanName
 		String name = ele.getAttribute(NAME_ATTRIBUTE);
+		//提取别名
 		String alias = ele.getAttribute(ALIAS_ATTRIBUTE);
 		boolean valid = true;
 		if (!StringUtils.hasText(name)) {
@@ -305,6 +324,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		if (bdHolder != null) {
+			//解析自定义子标签
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.
@@ -315,6 +335,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						bdHolder.getBeanName() + "'", ele, ex);
 			}
 			// Send registration event.
+			//用于扩展，发送注册消息
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}

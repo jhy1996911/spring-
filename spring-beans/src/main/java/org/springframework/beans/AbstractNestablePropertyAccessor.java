@@ -236,12 +236,14 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 	public void setPropertyValue(String propertyName, @Nullable Object value) throws BeansException {
 		AbstractNestablePropertyAccessor nestedPa;
 		try {
+			//根据属性名称获取BeanWrapperImpl实例
 			nestedPa = getPropertyAccessorForPropertyPath(propertyName);
 		}
 		catch (NotReadablePropertyException ex) {
 			throw new NotWritablePropertyException(getRootClass(), this.nestedPath + propertyName,
 					"Nested property in path '" + propertyName + "' does not exist", ex);
 		}
+		//包装成PropertyTokenHolder
 		PropertyTokenHolder tokens = getPropertyNameTokens(getFinalPath(nestedPa, propertyName));
 		nestedPa.setPropertyValue(tokens, new PropertyValue(propertyName, value));
 	}
@@ -449,10 +451,10 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 										this.nestedPath + tokens.canonicalName + "'", ex);
 							}
 						}
-					}
+					}//大概就是转换变量 比如说String类型转换为Integer类型的
 					valueToApply = convertForProperty(
 							tokens.canonicalName, oldValue, originalValue, ph.toTypeDescriptor());
-				}
+				}//是否需要转换标记
 				pv.getOriginalPropertyValue().conversionNecessary = (valueToApply != originalValue);
 			}
 			ph.setValue(valueToApply);
@@ -808,8 +810,10 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 	 */
 	@SuppressWarnings("unchecked")  // avoid nested generic
 	protected AbstractNestablePropertyAccessor getPropertyAccessorForPropertyPath(String propertyPath) {
+		//判断是否有多重属性
 		int pos = PropertyAccessorUtils.getFirstNestedPropertySeparatorIndex(propertyPath);
 		// Handle nested properties recursively.
+		//处理多重属性递归问题
 		if (pos > -1) {
 			String nestedProperty = propertyPath.substring(0, pos);
 			String nestedPath = propertyPath.substring(pos + 1);

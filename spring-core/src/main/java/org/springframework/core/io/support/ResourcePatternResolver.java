@@ -23,7 +23,7 @@ import org.springframework.core.io.ResourceLoader;
 
 /**
  * Strategy interface for resolving a location pattern (for example,
- * an Ant-style path pattern) into Resource objects.
+ * an Ant-style path pattergen) into Resource objects.
  *
  * <p>This is an extension to the {@link org.springframework.core.io.ResourceLoader}
  * interface. A passed-in ResourceLoader (for example, an

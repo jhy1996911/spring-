@@ -262,6 +262,7 @@ public class RequestMappingHandlerMapping extends RequestMappingInfoHandlerMappi
 			}
 			String prefix = getPathPrefix(handlerType);
 			if (prefix != null) {
+				//建造者模式
 				info = RequestMappingInfo.paths(prefix).options(this.config).build().combine(info);
 			}
 		}

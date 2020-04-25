@@ -127,6 +127,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	private final XmlValidationModeDetector validationModeDetector = new XmlValidationModeDetector();
 
+	/**
+	 * 已经加载的资源
+	 */
 	private final ThreadLocal<Set<EncodedResource>> resourcesCurrentlyBeingLoaded =
 			new NamedThreadLocal<>("XML bean definition resources currently being loaded");
 
@@ -262,9 +265,11 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 			// Determine default EntityResolver to use.
 			ResourceLoader resourceLoader = getResourceLoader();
 			if (resourceLoader != null) {
+				//通过网络获取到了
 				this.entityResolver = new ResourceEntityResolver(resourceLoader);
 			}
 			else {
+				//在自己的工程里读取
 				this.entityResolver = new DelegatingEntityResolver(getBeanClassLoader());
 			}
 		}
@@ -317,7 +322,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		if (logger.isTraceEnabled()) {
 			logger.trace("Loading XML bean definitions from " + encodedResource);
 		}
-
+		//已经加载的资源
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 		if (currentResources == null) {
 			currentResources = new HashSet<>(4);
@@ -446,9 +451,11 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	protected int getValidationModeForResource(Resource resource) {
 		int validationModeToUse = getValidationMode();
+		//如果自定义验证模式，则直接返回
 		if (validationModeToUse != VALIDATION_AUTO) {
 			return validationModeToUse;
 		}
+		//检测资源的验证模式
 		int detectedMode = detectValidationMode(resource);
 		if (detectedMode != VALIDATION_AUTO) {
 			return detectedMode;
@@ -487,6 +494,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		}
 
 		try {
+			//获取解析方式 XSD or DTD
 			return this.validationModeDetector.detectValidationMode(inputStream);
 		}
 		catch (IOException ex) {
@@ -510,8 +518,11 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
+		//初始化beanDefineitionDocumentReader时，注入
 		int countBefore = getRegistry().getBeanDefinitionCount();
+
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
+		//返回这次注册的个数
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
 
@@ -522,6 +533,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see #setDocumentReaderClass
 	 */
 	protected BeanDefinitionDocumentReader createBeanDefinitionDocumentReader() {
+		// TODO: 2020/2/4 这里为什么不是直接new？
 		return BeanUtils.instantiateClass(this.documentReaderClass);
 	}
 

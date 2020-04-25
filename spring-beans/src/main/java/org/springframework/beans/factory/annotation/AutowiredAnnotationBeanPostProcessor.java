@@ -68,6 +68,8 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.PostConstruct;
+
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor BeanPostProcessor}
  * implementation that autowires annotated fields, setter methods, and arbitrary
@@ -159,6 +161,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	 */
 	@SuppressWarnings("unchecked")
 	public AutowiredAnnotationBeanPostProcessor() {
+		//只处理这两种注解
 		this.autowiredAnnotationTypes.add(Autowired.class);
 		this.autowiredAnnotationTypes.add(Value.class);
 		try {

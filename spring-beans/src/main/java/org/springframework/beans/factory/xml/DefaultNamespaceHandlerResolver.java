@@ -115,11 +115,13 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 	@Override
 	@Nullable
 	public NamespaceHandler resolve(String namespaceUri) {
+		//获取所有的handle
 		Map<String, Object> handlerMappings = getHandlerMappings();
 		Object handlerOrClassName = handlerMappings.get(namespaceUri);
 		if (handlerOrClassName == null) {
 			return null;
 		}
+		//如果该handler使用过
 		else if (handlerOrClassName instanceof NamespaceHandler) {
 			return (NamespaceHandler) handlerOrClassName;
 		}
@@ -131,6 +133,7 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 					throw new FatalBeanException("Class [" + className + "] for namespace [" + namespaceUri +
 							"] does not implement the [" + NamespaceHandler.class.getName() + "] interface");
 				}
+				//实例化handle
 				NamespaceHandler namespaceHandler = (NamespaceHandler) BeanUtils.instantiateClass(handlerClass);
 				namespaceHandler.init();
 				handlerMappings.put(namespaceUri, namespaceHandler);
@@ -152,20 +155,25 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 	 */
 	private Map<String, Object> getHandlerMappings() {
 		Map<String, Object> handlerMappings = this.handlerMappings;
+		//第一层判断为了后续不用加锁而消耗资源
 		if (handlerMappings == null) {
+			//加锁
 			synchronized (this) {
 				handlerMappings = this.handlerMappings;
+				//加锁后再次判断
 				if (handlerMappings == null) {
 					if (logger.isTraceEnabled()) {
 						logger.trace("Loading NamespaceHandler mappings from [" + this.handlerMappingsLocation + "]");
 					}
 					try {
+						//this.handlerMappingsLocation 已经在构造函数中初始化为META-INF/Spring.handles
 						Properties mappings =
 								PropertiesLoaderUtils.loadAllProperties(this.handlerMappingsLocation, this.classLoader);
 						if (logger.isTraceEnabled()) {
 							logger.trace("Loaded NamespaceHandler mappings: " + mappings);
 						}
 						handlerMappings = new ConcurrentHashMap<>(mappings.size());
+						//将mappings 放到handlerMappings中
 						CollectionUtils.mergePropertiesIntoMap(mappings, handlerMappings);
 						this.handlerMappings = handlerMappings;
 					}

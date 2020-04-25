@@ -254,6 +254,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				logger.trace("Could not resolve type for bean '" + beanName + "'", ex);
 			}
 		}
+		//筛选出bean的类型是handler
 		if (beanType != null && isHandler(beanType)) {
 			detectHandlerMethods(beanName);
 		}
@@ -265,11 +266,14 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 * @see #getMappingForMethod
 	 */
 	protected void detectHandlerMethods(Object handler) {
+		//获取handler类型
 		Class<?> handlerType = (handler instanceof String ?
 				obtainApplicationContext().getType((String) handler) : handler.getClass());
 
 		if (handlerType != null) {
+			//如果是cglib代理的子类型，返回父类型
 			Class<?> userType = ClassUtils.getUserClass(handlerType);
+			// 查询所有的当前bean中符合要求的Method
 			Map<Method, T> methods = MethodIntrospector.selectMethods(userType,
 					(MethodIntrospector.MetadataLookup<T>) method -> {
 						try {
@@ -285,6 +289,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			}
 			methods.forEach((method, mapping) -> {
 				Method invocableMethod = AopUtils.selectInvocableMethod(method, userType);
+				//注册到map中
 				registerHandlerMethod(handler, invocableMethod, mapping);
 			});
 		}
@@ -360,11 +365,15 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	@Override
 	protected HandlerMethod getHandlerInternal(HttpServletRequest request) throws Exception {
+		//从request中获取请求路径
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
 		request.setAttribute(LOOKUP_PATH, lookupPath);
+		//加锁
 		this.mappingRegistry.acquireReadLock();
 		try {
+			//查找到相应的HandlerMethod
 			HandlerMethod handlerMethod = lookupHandlerMethod(lookupPath, request);
+			//如果是String类型的，从Spring容器中取
 			return (handlerMethod != null ? handlerMethod.createWithResolvedBean() : null);
 		}
 		finally {
@@ -383,18 +392,22 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	@Nullable
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception {
+		//内部类，保存了匹配条件和Handler的对应关系。为什么这里不用Map了，而前面用的是Map。。。迷得很
 		List<Match> matches = new ArrayList<>();
+		//更具url查询匹配条件
 		List<T> directPathMatches = this.mappingRegistry.getMappingsByUrl(lookupPath);
 		if (directPathMatches != null) {
+			//将匹配条件放入matchs
 			addMatchingMappings(directPathMatches, matches, request);
 		}
 		if (matches.isEmpty()) {
-			// No choice but to go through all mappings...
+			//lookup没有找到匹配条件，将所有的匹配条件放入
 			addMatchingMappings(this.mappingRegistry.getMappings().keySet(), matches, request);
 		}
 
 		if (!matches.isEmpty()) {
 			Comparator<Match> comparator = new MatchComparator(getMappingComparator(request));
+			//符合条件的进行排序
 			matches.sort(comparator);
 			Match bestMatch = matches.get(0);
 			if (matches.size() > 1) {
@@ -404,6 +417,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				if (CorsUtils.isPreFlightRequest(request)) {
 					return PREFLIGHT_AMBIGUOUS_MATCH;
 				}
+				//比较第一个和第二个，是否两个都是最佳的，即两个Handler都能匹配到同一个
 				Match secondBestMatch = matches.get(1);
 				if (comparator.compare(bestMatch, secondBestMatch) == 0) {
 					Method m1 = bestMatch.handlerMethod.getMethod();
@@ -596,17 +610,21 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			this.readWriteLock.writeLock().lock();
 			try {
 				HandlerMethod handlerMethod = createHandlerMethod(handler, method);
+				//校验是否唯一
 				validateMethodMapping(handlerMethod, mapping);
+				//添加到 mappingLookup
 				this.mappingLookup.put(mapping, handlerMethod);
 
 				List<String> directUrls = getDirectUrls(mapping);
 				for (String url : directUrls) {
+					//添加到 urlMap
 					this.urlLookup.add(url, mapping);
 				}
 
 				String name = null;
 				if (getNamingStrategy() != null) {
 					name = getNamingStrategy().getName(handlerMethod, mapping);
+					//添加到 nameLookup
 					addMappingName(name, handlerMethod);
 				}
 

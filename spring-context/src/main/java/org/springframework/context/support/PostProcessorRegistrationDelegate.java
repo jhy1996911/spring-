@@ -64,6 +64,8 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
+				//由于BeanFactoryPostProcessor 继承了BeanFactoryPostProcessor
+				//所有要判断要判断一下，传入的bean是BeanFactoryPostProcessor类型的，还是BeanFactoryPostProcessor类型的，并存放到不同的list中
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;

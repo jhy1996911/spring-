@@ -51,6 +51,13 @@ public class BeansDtdResolver implements EntityResolver {
 	private static final Log logger = LogFactory.getLog(BeansDtdResolver.class);
 
 
+	/**
+	 * 当前路径下寻找DTD 文件
+	 * @param publicId
+	 * @param systemId
+	 * @return
+	 * @throws IOException
+	 */
 	@Override
 	@Nullable
 	public InputSource resolveEntity(@Nullable String publicId, @Nullable String systemId) throws IOException {

@@ -41,6 +41,7 @@ import org.springframework.util.ClassUtils;
  * @see RequestContextListener
  * @see org.springframework.web.filter.RequestContextFilter
  * @see org.springframework.web.servlet.DispatcherServlet
+ * todo 这个类就像是一个工具类一样，为什么要加个abstract修饰呢？？？
  */
 public abstract class RequestContextHolder  {
 

@@ -995,6 +995,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * Return whether this bean definition is 'synthetic', that is,
 	 * not defined by the application itself.
+	 * 是否是用户自定义的
 	 */
 	public boolean isSynthetic() {
 		return this.synthetic;
@@ -1092,6 +1093,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * @throws BeanDefinitionValidationException in case of validation failure
 	 */
 	public void validate() throws BeanDefinitionValidationException {
+		//如果 MethodOverrides 与工厂方法并存，或者MethodOverrides不存在
+		//todo 工厂方法指的是？
 		if (hasMethodOverrides() && getFactoryMethodName() != null) {
 			throw new BeanDefinitionValidationException(
 					"Cannot combine factory method with container-generated method overrides: " +
@@ -1122,6 +1125,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * @throws BeanDefinitionValidationException in case of validation failure
 	 */
 	protected void prepareMethodOverride(MethodOverride mo) throws BeanDefinitionValidationException {
+		//获取对应类中的方法总数
 		int count = ClassUtils.getMethodCountForName(getBeanClass(), mo.getMethodName());
 		if (count == 0) {
 			throw new BeanDefinitionValidationException(
@@ -1130,6 +1134,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 		}
 		else if (count == 1) {
 			// Mark override as not overloaded, to avoid the overhead of arg type checking.
+			//当只有一个方法的时候，表示没有重载方法，进行标记
 			mo.setOverloaded(false);
 		}
 	}

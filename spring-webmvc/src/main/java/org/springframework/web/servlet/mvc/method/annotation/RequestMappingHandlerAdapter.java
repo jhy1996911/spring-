@@ -577,6 +577,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			return;
 		}
 
+		//找到 @ControllerAdvice 应用的bean
 		List<ControllerAdviceBean> adviceBeans = ControllerAdviceBean.findAnnotatedBeans(getApplicationContext());
 
 		List<Object> requestResponseBodyAdviceBeans = new ArrayList<>();
@@ -586,20 +587,24 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			if (beanType == null) {
 				throw new IllegalStateException("Unresolvable type for ControllerAdviceBean: " + adviceBean);
 			}
+			//找到注释了@ModelAttribute 但是没注释 @RequestMapping 方法
 			Set<Method> attrMethods = MethodIntrospector.selectMethods(beanType, MODEL_ATTRIBUTE_METHODS);
 			if (!attrMethods.isEmpty()) {
 				this.modelAttributeAdviceCache.put(adviceBean, attrMethods);
 			}
+			//找到注释了 @initBinder 的方法
 			Set<Method> binderMethods = MethodIntrospector.selectMethods(beanType, INIT_BINDER_METHODS);
 			if (!binderMethods.isEmpty()) {
 				this.initBinderAdviceCache.put(adviceBean, binderMethods);
 			}
+			//查找实现了ResponseBodyAdvice实现类
 			if (RequestBodyAdvice.class.isAssignableFrom(beanType) || ResponseBodyAdvice.class.isAssignableFrom(beanType)) {
 				requestResponseBodyAdviceBeans.add(adviceBean);
 			}
 		}
 
 		if (!requestResponseBodyAdviceBeans.isEmpty()) {
+			//表示先处理注解的
 			this.requestResponseBodyAdvice.addAll(0, requestResponseBodyAdviceBeans);
 		}
 
@@ -635,6 +640,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 		List<HandlerMethodArgumentResolver> resolvers = new ArrayList<>();
 
 		// Annotation-based argument resolution
+		//基于注解的解析器
 		resolvers.add(new RequestParamMethodArgumentResolver(getBeanFactory(), false));
 		resolvers.add(new RequestParamMapMethodArgumentResolver());
 		resolvers.add(new PathVariableMethodArgumentResolver());
@@ -652,6 +658,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 		resolvers.add(new RequestAttributeMethodArgumentResolver());
 
 		// Type-based argument resolution
+		//基于类型的解析器
 		resolvers.add(new ServletRequestMethodArgumentResolver());
 		resolvers.add(new ServletResponseMethodArgumentResolver());
 		resolvers.add(new HttpEntityMethodProcessor(getMessageConverters(), this.requestResponseBodyAdvice));
@@ -663,11 +670,13 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 		resolvers.add(new UriComponentsBuilderMethodArgumentResolver());
 
 		// Custom arguments
+		// 自定义解析器
 		if (getCustomArgumentResolvers() != null) {
 			resolvers.addAll(getCustomArgumentResolvers());
 		}
 
 		// Catch-all
+		// 解析所有的解析器
 		resolvers.add(new RequestParamMethodArgumentResolver(getBeanFactory(), true));
 		resolvers.add(new ServletModelAttributeMethodProcessor(true));
 
@@ -761,17 +770,28 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 * if it is a simple type, or as a model attribute otherwise. A return value
 	 * not recognized by any HandlerMethodReturnValueHandler will be interpreted
 	 * as a model attribute.
+	 * 根据父类的判断
 	 */
 	@Override
 	protected boolean supportsInternal(HandlerMethod handlerMethod) {
 		return true;
 	}
 
+	/**
+	 * 入口
+	 * @param request current HTTP request
+	 * @param response current HTTP response
+	 * @param handlerMethod handler method to use. This object must have previously been passed to the
+	 * {@link #supportsInternal(HandlerMethod)} this interface, which must have returned {@code true}.
+	 * @return
+	 * @throws Exception
+	 */
 	@Override
 	protected ModelAndView handleInternal(HttpServletRequest request,
 			HttpServletResponse response, HandlerMethod handlerMethod) throws Exception {
 
 		ModelAndView mav;
+		//校验方法
 		checkRequest(request);
 
 		// Execute invokeHandlerMethod in synchronized block if required.
@@ -793,6 +813,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			mav = invokeHandlerMethod(request, response, handlerMethod);
 		}
 
+		//请求带缓存
 		if (!response.containsHeader(HEADER_CACHE_CONTROL)) {
 			if (getSessionAttributesHandler(handlerMethod).hasSessionAttributes()) {
 				applyCacheSeconds(response, this.cacheSecondsForSessionAttributeHandlers);

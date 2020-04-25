@@ -76,6 +76,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 								registeredName + "' with new target name '" + name + "'");
 					}
 				}
+				//别名循环依赖检查 比如A->B存在时，又存在A->B的情况抛出异常
 				checkForAliasCircle(name, alias);
 				this.aliasMap.put(alias, name);
 				if (logger.isTraceEnabled()) {
@@ -205,6 +206,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	 * Determine the raw name, resolving aliases to canonical names.
 	 * @param name the user-specified name
 	 * @return the transformed name
+	 * 处理别名，获取真实的bean的名称
 	 */
 	public String canonicalName(String name) {
 		String canonicalName = name;

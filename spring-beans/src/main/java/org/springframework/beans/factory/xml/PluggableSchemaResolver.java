@@ -106,6 +106,7 @@ public class PluggableSchemaResolver implements EntityResolver {
 
 	@Override
 	@Nullable
+	//从本地的 META-INF/spring.schemas目录下寻找
 	public InputSource resolveEntity(@Nullable String publicId, @Nullable String systemId) throws IOException {
 		if (logger.isTraceEnabled()) {
 			logger.trace("Trying to resolve XML entity with public id [" + publicId +

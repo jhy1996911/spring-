@@ -132,6 +132,7 @@ class ConstructorResolver {
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
 
+		//如果指定参数已经传入，则直接用
 		if (explicitArgs != null) {
 			argsToUse = explicitArgs;
 		}
@@ -141,6 +142,7 @@ class ConstructorResolver {
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
 				if (constructorToUse != null && mbd.constructorArgumentsResolved) {
 					// Found a cached constructor...
+					//从缓存中解析
 					argsToUse = mbd.resolvedConstructorArguments;
 					if (argsToUse == null) {
 						argsToResolve = mbd.preparedConstructorArguments;
@@ -148,16 +150,20 @@ class ConstructorResolver {
 				}
 			}
 			if (argsToResolve != null) {
+				//解析构造函数
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, constructorToUse, argsToResolve, true);
 			}
 		}
 
+		//缓存中不存在
 		if (constructorToUse == null || argsToUse == null) {
 			// Take specified constructors, if any.
+			//首先判断入参有没有指定
 			Constructor<?>[] candidates = chosenCtors;
 			if (candidates == null) {
 				Class<?> beanClass = mbd.getBeanClass();
 				try {
+					//获取所有的构造函数
 					candidates = (mbd.isNonPublicAccessAllowed() ?
 							beanClass.getDeclaredConstructors() : beanClass.getConstructors());
 				}
@@ -168,6 +174,7 @@ class ConstructorResolver {
 				}
 			}
 
+			//如果只有一个默认构造函数
 			if (candidates.length == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Constructor<?> uniqueCandidate = candidates[0];
 				if (uniqueCandidate.getParameterCount() == 0) {
@@ -191,11 +198,14 @@ class ConstructorResolver {
 				minNrOfArgs = explicitArgs.length;
 			}
 			else {
+				//提取配置文件中的参数
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
 				resolvedValues = new ConstructorArgumentValues();
+				//解析到的参数个数
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 			}
 
+			//构造参数排序
 			AutowireUtils.sortConstructors(candidates);
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Constructor<?>> ambiguousConstructors = null;
@@ -671,8 +681,10 @@ class ConstructorResolver {
 		BeanDefinitionValueResolver valueResolver =
 				new BeanDefinitionValueResolver(this.beanFactory, beanName, mbd, converter);
 
+		//获取构造函数参数个数
 		int minNrOfArgs = cargs.getArgumentCount();
 
+		//遍历参数
 		for (Map.Entry<Integer, ConstructorArgumentValues.ValueHolder> entry : cargs.getIndexedArgumentValues().entrySet()) {
 			int index = entry.getKey();
 			if (index < 0) {

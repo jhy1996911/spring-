@@ -283,8 +283,11 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 */
 	@Override
 	protected void initApplicationContext() throws BeansException {
+		//模板方法，留给子类的添加拦截器的
 		extendInterceptors(this.interceptors);
+		//查询spring管理的MappedInterceptor类型的拦截器
 		detectMappedInterceptors(this.adaptedInterceptors);
+		//初始化 MappedInterceptor 类型和 WebRequestInterceptor 类型的拦截器
 		initInterceptors();
 	}
 
@@ -392,6 +395,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	@Override
 	@Nullable
 	public final HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+		//模板方法 查找handler
 		Object handler = getHandlerInternal(request);
 		if (handler == null) {
 			handler = getDefaultHandler();
@@ -402,9 +406,10 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 		// Bean name or resolved handler?
 		if (handler instanceof String) {
 			String handlerName = (String) handler;
+			//利用Spring容器获取bean
 			handler = obtainApplicationContext().getBean(handlerName);
 		}
-
+        //组装Handler和拦截器
 		HandlerExecutionChain executionChain = getHandlerExecutionChain(handler, request);
 
 		if (logger.isTraceEnabled()) {

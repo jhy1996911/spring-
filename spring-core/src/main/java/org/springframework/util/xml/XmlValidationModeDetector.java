@@ -96,9 +96,11 @@ public class XmlValidationModeDetector {
 			String content;
 			while ((content = reader.readLine()) != null) {
 				content = consumeCommentTokens(content);
+				//如果是注释或者是空行
 				if (this.inComment || !StringUtils.hasText(content)) {
 					continue;
 				}
+				//是否包含DOCTYPE，包含的话就使用DTD，否则用XSD
 				if (hasDoctype(content)) {
 					isDtdValidated = true;
 					break;
@@ -146,6 +148,8 @@ public class XmlValidationModeDetector {
 	 * Consume all leading and trailing comments in the given String and return
 	 * the remaining content, which may be empty since the supplied content might
 	 * be all comment data.
+	 *
+	 * 解析xml中一行
 	 */
 	@Nullable
 	private String consumeCommentTokens(String line) {
